@@ -1,7 +1,10 @@
-﻿namespace WebApplication1.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication1.Models
 {
     public class KhuyenMaiCT
     {
+        [Key]
         public int IdKMCT { get; set; }
         public int PhanTramGiam { get; set; }
         public DateTime NgayBatDau { get; set; }

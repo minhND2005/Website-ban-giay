@@ -1,7 +1,10 @@
-﻿namespace WebApplication1.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication1.Models
 {
     public class HangSanXuat
     {
+        [Key]
         public int IdHSX {  get; set; }
         
         public string NameHSX { get; set; }

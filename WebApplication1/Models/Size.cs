@@ -1,7 +1,10 @@
-﻿namespace WebApplication1.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication1.Models
 {
     public class Size
     {
+        [Key] 
         public int IdSize { get; set; }
 
         public string SizeName { get; set; }

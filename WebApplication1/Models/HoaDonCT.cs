@@ -1,7 +1,10 @@
-﻿namespace WebApplication1.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication1.Models
 {
     public class HoaDonCT
     {
+        [Key]
         public int IdHDCT { get; set; }
         public decimal GiaBan { get; set; }
         public int? IdHD {  get; set; }

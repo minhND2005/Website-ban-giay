@@ -1,0 +1,80 @@
+﻿@model WebApplication1.Models.SanPhamCT
+
+@{
+    ViewData["Title"] = "Tạo Sản Phẩm Mới";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+@if (TempData["mess"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["mess"]
+    </div>
+}
+
+<form asp-action="Create" asp-controller="SanPhamCT" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="TenSp">Tên Sản Phẩm</label>
+        <input type="text" class="form-control" id="TenSp" name="TenSp" value="@Model.TenSp" required />
+    </div>
+
+    <div class="form-group">
+        <label for="Img">Ảnh Sản Phẩm</label>
+        <input type="file" class="form-control" id="Img" name="Img" />
+    </div>
+
+    <div class="form-group">
+        <label for="SoluongTon">Số Lượng Tồn</label>
+        <input type="number" class="form-control" id="SoluongTon" name="SoluongTon" value="@Model.SoluongTon" min="0" required />
+    </div>
+
+    <div class="form-group">
+        <label for="Gia">Giá</label>
+        <input type="number" class="form-control" id="Gia" name="Gia" value="@Model.Gia" min="0" step="0.01" required />
+    </div>
+
+    <div class="form-group">
+        <label for="MauSac">Màu Sắc</label>
+        <select class="form-control" id="MauSac" name="IdMauSac">
+            <option value="">-- Chọn màu sắc --</option>
+            @if (ViewData["MauSacList"] is List<WebApplication1.Models.MauSac> mauSacList)
+            {
+                foreach (var mau in mauSacList)
+                {
+                    <option value="@mau.IdMauSac">@mau.TenMau</option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="Size">Kích Cỡ</label>
+        <select class="form-control" id="Size" name="IdSize">
+            <option value="">-- Chọn kích cỡ --</option>
+            @if (ViewData["SizeList"] is List<WebApplication1.Models.Size> sizeList)
+            {
+                foreach (var size in sizeList)
+                {
+                    <option value="@size.IdSize">@size.SizeName</option>
+                }
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="HangSanXuat">Hãng Sản Xuất</label>
+        <select class="form-control" id="HangSanXuat" name="IdHSX">
+            <option value="">-- Chọn hãng sản xuất --</option>
+            @if (ViewData["HangSanXuatList"] is List<WebApplication1.Models.HangSanXuat> hangSanXuatList)
+            {
+                foreach (var hsx in hangSanXuatList)
+                {
+                    <option value="@hsx.IdHSX">@hsx.NameHSX</option>
+                }
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Tạo Sản Phẩm</button>
+</form>

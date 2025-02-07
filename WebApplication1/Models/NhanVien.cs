@@ -1,7 +1,10 @@
-﻿namespace WebApplication1.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication1.Models
 {
     public class NhanVien
     {
+        [Key]
         public int IdNV { get; set; }
         public string NameNV { get; set; }
         public string DiaChi {  get; set; }

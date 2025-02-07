@@ -1,0 +1,55 @@
+﻿@model IEnumerable<WebApplication1.Models.GioHangCT>
+
+@{
+    ViewData["Title"] = "Giỏ Hàng";
+}
+
+<h1>Giỏ Hàng</h1>
+
+<a asp-action="Index" asp-controller="SanPhamCT" class="btn btn-warning btn-sm">Trang Chủ</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tên Sản Phẩm</th>
+            <th>Hinh Anh</th>
+            <th>Màu sắc</th>
+            <th>Size</th>
+            <th>@Html.DisplayNameFor(model => model.Soluong)</th>
+            <th>@Html.DisplayNameFor(model => model.GiaBan)</th>
+
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.SanPhamCT.TenSp)
+                </td>
+                <td>
+                    <img src="~/img/@item.SanPhamCT.Img" alt="Ảnh sản phẩm" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+                </td>
+
+                <td>
+                    @(item.SanPhamCT.MauSac != null ? item.SanPhamCT.MauSac.TenMau : "Không có màu")
+                </td>
+                <td>
+                    @(item.SanPhamCT.size != null ? item.SanPhamCT.size.SizeName : "Không có size")
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Soluong)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.GiaBan)
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.IdGHCT">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.IdGHCT">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.IdGHCT">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,9 +1,11 @@
-﻿using System.Data.SqlTypes;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Data.SqlTypes;
 
 namespace WebApplication1.Models
 {
     public class KhachHang
     {
+        [Key]
         public int IdKH {  get; set; }
         public string Name { get; set; }
         public string DiaChi { get; set; }

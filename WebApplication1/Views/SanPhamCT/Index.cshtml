@@ -1,0 +1,93 @@
+﻿@model List<WebApplication1.Models.SanPhamCT>
+
+@{
+    ViewData["Title"] = "Danh Sách Sản Phẩm";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+@if (TempData["mess"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["mess"]
+    </div>
+}
+
+@if (ViewData["mess1"] != null)
+{
+    <div class="alert alert-info">
+        @ViewData["mess1"]
+    </div>
+}
+
+<form method="get" asp-action="Index" asp-controller="SanPhamCT">
+    <div class="form-group">
+        <input type="text" name="name" class="form-control" placeholder="Nhập tên sản phẩm để tìm kiếm..." value="@ViewContext.HttpContext.Request.Query["name"]" />
+    </div>
+    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+</form>
+
+<a asp-action="Create" asp-controller="SanPhamCT" class="btn btn-warning btn-sm">Thêm sản phẩm</a>
+
+<a asp-action="Index" asp-controller="GioHangCT" class="btn btn-primary btn-sm">Giỏ Hàng Của Bạn</a>
+
+<table class="table table-bordered table-hover mt-3">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Tên Sản Phẩm</th>
+            <th>Ảnh</th>
+            <th>Giá</th>
+            <th>Số Lượng Tồn</th>
+            <th>Màu Sắc</th>
+            <th>Kích Thước</th>
+            <th>Hãng Sản Xuất</th>
+            <th>Hành Động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Count > 0)
+        {
+            int index = 1;
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@index</td>
+                    <td>@item.TenSp</td>
+                    <td>
+                        <img src="~/img/@item.Img" alt="Hình ảnh" style="width: 200px; height: auto;" />
+                    </td>
+                    <td>@(item.Gia?.ToString("C") ?? "Chưa cập nhật")</ td>
+                    <td>@item.SoluongTon</td>
+                    <td>@Html.DisplayFor(modelItem => item.MauSac.TenMau)</td>
+                    <td>@Html.DisplayFor(modelItem => item.size.SizeName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.HangSanXuat.NameHSX)</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.IdSPCT" class="btn btn-warning btn-sm">Sửa</a>
+                        <form asp-action="Delete" asp-route-id="@item.IdSPCT" method="post" onsubmit="return confirm('Bạn xác định xóa sản phẩm này không?');" style="display:inline;">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                            </form>
+                        @using (Html.BeginForm("AddGioHang", "SanPhamCT", FormMethod.Post))
+                        {
+                            @Html.Hidden("id", item.IdSPCT) <!-- Thay yourIdValue bằng giá trị id thực tế -->
+                            <div class="form-group">
+                                <label for="quantity" class="control-label">Quantity:</label>
+                                <input type="text" name="Soluong" id="Soluong" class="form-control" />
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" value="Add to Cart" class="btn btn-primary" />
+                            </div>
+                        }
+                    </td>
+                </tr>
+                index++;
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="9" class="text-center">Không có sản phẩm nào!</td>
+            </tr>
+        }
+    </tbody>
+</table>

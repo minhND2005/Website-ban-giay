@@ -1,0 +1,69 @@
+﻿@model WebApplication1.Models.SanPhamCT
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>SanPhamCT</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <input type="hidden" asp-for="IdSPCT" />
+
+            <div class="form-group">
+                <label asp-for="TenSp" class="control-label"></label>
+                <input asp-for="TenSp" class="form-control" />
+                <span asp-validation-for="TenSp" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="Img">Ảnh Sản Phẩm</label>
+                <input type="file" class="form-control" id="Img" name="Img" />
+                @if (!string.IsNullOrEmpty(Model.Img))
+                {
+                    <p>Ảnh hiện tại:</p>
+                    <img src="~/img/@Model.Img" alt="@Model.TenSp" style="max-width: 150px; height: auto;" />
+                }
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SoluongTon" class="control-label"></label>
+                <input asp-for="SoluongTon" class="form-control" />
+                <span asp-validation-for="SoluongTon" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Gia" class="control-label"></label>
+                <input asp-for="Gia" class="form-control" />
+                <span asp-validation-for="Gia" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="MauSac">Màu Sắc</label>
+                <select asp-for="IdMauSac" class="form-control" asp-items="@(new SelectList(ViewData["MauSacList"] as List<WebApplication1.Models.MauSac>, "IdMauSac", "TenMau", Model.IdMauSac))"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="Size">Kích Cỡ</label>
+                <select asp-for="IdSize" class="form-control" asp-items="@(new SelectList(ViewData["SizeList"] as List<WebApplication1.Models.Size>, "IdSize", "SizeName", Model.IdSize))"></select>
+            </div>
+
+            <div class="form-group">
+                <label for="HangSanXuat">Hãng Sản Xuất</label>
+                <select asp-for="IdHSX" class="form-control" asp-items="@(new SelectList(ViewData["HangSanXuatList"] as List<WebApplication1.Models.HangSanXuat>, "IdHSX", "NameHSX", Model.IdHSX))"></select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
+            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+        </form>
+
+    </div>
+</div>
+
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

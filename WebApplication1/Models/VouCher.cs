@@ -1,7 +1,10 @@
-﻿namespace WebApplication1.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication1.Models
 {
     public class VouCher
     {
+        [Key]
         public int IdVouCher { get; set; }
         public string VouCherName { get; set; }
 

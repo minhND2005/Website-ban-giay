@@ -20,7 +20,20 @@ namespace WebApplication1.Models
             );
 
         }
-        
+        public DbSet<Account> Accounts { get; set; }
+        public DbSet<ChuongTrinhKM> chuongTrinhKMs { get; set; }
+        public DbSet<HoaDon> hoaDons { get; set; }
+        public DbSet<HoaDonCT> hoaDonsCT { get; set; }
+        public DbSet<SanPham> sanPhams { get; set; }
+        public DbSet<SanPhamCT> sanPhamCT { get;set; }
+        public DbSet<HangSanXuat> hangSanXuats { get; set; }
+        public DbSet<KhachHang> khachHang { get; set; }
+        public DbSet<VouCher> vouChers { get; set; }
+        public DbSet<NhanVien> nhanViens { get; set; }
+        public DbSet<KhuyenMaiCT> khuyenMaiCT { get; set; }
+        public DbSet<MauSac> mauSacs { get; set; }
+        public DbSet<Size> sizes { get; set; }
+        public DbSet<GioHangCT> gioHangCT { get; set ; }
 
     }
 }

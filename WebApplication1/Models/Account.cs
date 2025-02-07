@@ -4,10 +4,13 @@ namespace WebApplication1.Models
 {
     public class Account
     {
+        [Key] 
         public int IdAcc { get; set; }
+
         [Required(ErrorMessage = "Vui lòng nhập email.")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
         public string Email { get; set; }
+        [Required]
         public string UserName { get; set; }
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
         [DataType(DataType.Password)]

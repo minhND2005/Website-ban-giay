@@ -1,11 +1,15 @@
-﻿namespace WebApplication1.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace WebApplication1.Models
 {
     public class SanPhamCT
     {
+        [Key]
         public int IdSPCT {  get; set; }
-        public string Img { get; set; }
-        public int SoluongTon { get; set; }
-        public Decimal Gia { get; set; }
+        public string? TenSp {  get; set; }
+        public string? Img { get; set; }
+        public int? SoluongTon { get; set; }
+        public Decimal? Gia { get; set; }
 
         public int? IdSP {  get; set; }
         public int? IdSize { get; set; }
