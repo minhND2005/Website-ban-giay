@@ -1,7 +1,7 @@
 ﻿@model List<WebApplication1.Models.SanPhamCT>
 
 @{
-    ViewData["Title"] = "Danh Sách Sản Phẩm";
+    ViewData["Title"] = "🛍️ Danh Sách Sản Phẩm";
 }
 
 <h2>@ViewData["Title"]</h2>
@@ -20,6 +20,20 @@
     </div>
 }
 
+@if (ViewData["NotFound"] != null)
+{
+    <div class="alert alert-danger">
+        @ViewData["NotFound"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
 <form method="get" asp-action="Index" asp-controller="SanPhamCT">
     <div class="form-group">
         <input type="text" name="name" class="form-control" placeholder="Nhập tên sản phẩm để tìm kiếm..." value="@ViewContext.HttpContext.Request.Query["name"]" />
@@ -28,7 +42,6 @@
 </form>
 
 <a asp-action="Create" asp-controller="SanPhamCT" class="btn btn-warning btn-sm">Thêm sản phẩm</a>
-
 <a asp-action="Index" asp-controller="GioHangCT" class="btn btn-primary btn-sm">Giỏ Hàng Của Bạn</a>
 
 <table class="table table-bordered table-hover mt-3">
@@ -49,7 +62,7 @@
         @if (Model != null && Model.Count > 0)
         {
             int index = 1;
-            foreach (var item in Model)
+            @foreach (var item in Model)
             {
                 <tr>
                     <td>@index</td>
@@ -57,30 +70,32 @@
                     <td>
                         <img src="~/img/@item.Img" alt="Hình ảnh" style="width: 200px; height: auto;" />
                     </td>
-                    <td>@(item.Gia?.ToString("C") ?? "Chưa cập nhật")</ td>
+                    <td>@(item.Gia?.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) + " ₫" ?? "Chưa cập nhật")</td>
                     <td>@item.SoluongTon</td>
                     <td>@Html.DisplayFor(modelItem => item.MauSac.TenMau)</td>
                     <td>@Html.DisplayFor(modelItem => item.size.SizeName)</td>
                     <td>@Html.DisplayFor(modelItem => item.HangSanXuat.NameHSX)</td>
                     <td>
                         <a asp-action="Edit" asp-route-id="@item.IdSPCT" class="btn btn-warning btn-sm">Sửa</a>
-                        <form asp-action="Delete" asp-route-id="@item.IdSPCT" method="post" onsubmit="return confirm('Bạn xác định xóa sản phẩm này không?');" style="display:inline;">
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                            </form>
+                        <form asp-action="Delete" asp-route-id="@item.IdSPCT" method="post"
+                              onsubmit="return confirm('Bạn xác định xóa sản phẩm này không?');" style="display:inline;">
+                            <button type="submit" class="btn btn-danger">Xóa</button>
+                        </form>
+
                         @using (Html.BeginForm("AddGioHang", "SanPhamCT", FormMethod.Post))
                         {
-                            @Html.Hidden("id", item.IdSPCT) <!-- Thay yourIdValue bằng giá trị id thực tế -->
+                            @Html.Hidden("Id", item.IdSPCT)
                             <div class="form-group">
-                                <label for="quantity" class="control-label">Quantity:</label>
-                                <input type="text" name="Soluong" id="Soluong" class="form-control" />
+                                <label for="soLuong" class="control-label">Số lượng:</label>
+                                <input type="number" name="soLuong" id="soLuong" class="form-control" required min="1" />
                             </div>
                             <div class="form-group">
-                                <input type="submit" value="Add to Cart" class="btn btn-primary" />
+                                <input type="submit" value="Thêm vào giỏ hàng" class="btn btn-primary" />
                             </div>
                         }
                     </td>
                 </tr>
-                index++;
+                index++; // Đặt ngoài thẻ <tr>
             }
         }
         else

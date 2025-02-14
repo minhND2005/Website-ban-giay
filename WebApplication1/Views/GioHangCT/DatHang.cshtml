@@ -1,0 +1,53 @@
+﻿@model WebApplication1.Models.KhachHang
+
+@{
+    ViewData["Title"] = "DatHang";
+}
+
+<h1>Đặt hàng</h1>
+
+<h4>Thông tin khách hàng</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="DatHang" method="post">
+            @Html.AntiForgeryToken() <!-- Thêm dòng này -->
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DiaChi" class="control-label"></label>
+                <input asp-for="DiaChi" class="form-control" />
+                <span asp-validation-for="DiaChi" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SDT" class="control-label"></label>
+                <input asp-for="SDT" class="form-control" />
+                <span asp-validation-for="SDT" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Tuoi" class="control-label"></label>
+                <input asp-for="Tuoi" class="form-control" />
+                <span asp-validation-for="Tuoi" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Đặt Hàng" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

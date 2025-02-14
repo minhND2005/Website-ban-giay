@@ -15,6 +15,7 @@ namespace WebApplication1.Models
         public int? IdSPCT { get; set; }
         public int? IdSP { get; set; }
         public int? IdAcc { get; set; }
+        
 
         // Foreign key attribute để xác định mối quan hệ
         [ForeignKey("IdAcc")]
@@ -22,5 +23,6 @@ namespace WebApplication1.Models
         public KhachHang? KhachHang { get; set; }
         public SanPhamCT? SanPhamCT { get; set; }
         public SanPham? SanPham { get; set; }
+        
     }
 }

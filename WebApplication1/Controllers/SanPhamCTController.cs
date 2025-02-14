@@ -13,7 +13,7 @@ namespace WebApplication1.Controllers
             _db = db;
         }
 
-        public IActionResult Index(string name)
+        public IActionResult Index(string name, string sortOrder)
         {
             var sessionData = HttpContext.Session.GetString("Account");
             if (sessionData == null)
@@ -29,7 +29,7 @@ namespace WebApplication1.Controllers
                 return RedirectToAction("Login", "Login");
             }
 
-            ViewData["mess1"] = $"Mời bạn xem sản phẩm của {user.UserName}";
+            ViewData["mess1"] = $"Chào mừng {user.UserName} đã đến xem cửa hàng TrendSneaker";
 
             var query = from sp in _db.sanPhamCT
                         join ms in _db.mauSacs on sp.IdMauSac equals ms.IdMauSac into msGroup
@@ -48,17 +48,28 @@ namespace WebApplication1.Controllers
                             MauSac = ms,
                             size = sz,
                             HangSanXuat = hsx
-                        };  
+                        };
 
             if (!string.IsNullOrEmpty(name))
             {
                 query = query.Where(x => x.TenSp.ToLower().Contains(name.ToLower()));
             }
 
+            // Sắp xếp dựa trên sortOrder
+            query = sortOrder == "desc"
+                    ? query.OrderByDescending(x => x.TenSp)
+                    : query.OrderBy(x => x.TenSp);
+
             var list = query.ToList();
+
+             if (list.Count == 0 && !string.IsNullOrEmpty(name))
+            {
+                ViewData["NotFound"] = $"Không tìm thấy sản phẩm nào với tên: '{name}'";
+            }
 
             return View(list);
         }
+
 
         [HttpGet]
         public IActionResult Create()
@@ -176,87 +187,145 @@ namespace WebApplication1.Controllers
             TempData["mess"] = "Cập nhật sản phẩm thành công!";
             return RedirectToAction("Index");
         }
-
-        public IActionResult AddGioHang(int id, int soLuong)
+        //[HttpPost]
+        //public IActionResult AddGioHang(int id, int soLuong)
+        //{
+        //    try
+        //    {
+        //        // Kiểm tra người dùng đăng nhập
+        //        var acc = HttpContext.Session.GetString("Account");
+        //        if (acc == null)
+        //        {
+        //            return Content("Chưa đăng nhập hoặc hết hạn");
+        //        }
+        //        var getAcc = _db.Accounts.FirstOrDefault(x => x.UserName == acc);
+        //        if (getAcc == null)
+        //        {
+        //            return Content("Tài khoản không tồn tại");
+        //        }
+        //        // Kiểm tra sản phẩm có tồn tại không
+        //        var sanPham = _db.sanPhamCT.FirstOrDefault(sp => sp.IdSPCT == id);
+        //        if (sanPham == null)
+        //        {
+        //            return Content("Sản phẩm không tồn tại");
+        //        }
+        //        if (soLuong <= 0)
+        //        {
+        //            return Content("Số lượng sản phẩm phải lớn hơn 0.");
+        //        }
+        //        // Lấy danh sách sản phẩm trong giỏ hàng của user
+        //        var userCart = _db.gioHangCT.Where(x => x.IdAcc == getAcc.IdAcc).ToList();
+        //        // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
+        //        var ghctUpdate = userCart.FirstOrDefault(x => x.IdSPCT == id);
+        //        // Nếu sản phẩm đã có trong giỏ hàng, cập nhật số lượng
+        //        if (ghctUpdate != null)
+        //        {
+        //            if ((ghctUpdate.Soluong + soLuong) > sanPham.SoluongTon)
+        //            {
+        //                return Content($"Số lượng sản phẩm trong kho không đủ (Tồn: {sanPham.SoluongTon}).");
+        //            }
+        //            ghctUpdate.Soluong += soLuong;
+        //            ghctUpdate.GiaBan = (sanPham.Gia ?? 0) * ghctUpdate.Soluong;
+        //        }
+        //        else
+        //        {
+        //            // Kiểm tra tồn kho trước khi thêm mới
+        //            if (soLuong > sanPham.SoluongTon)
+        //            {
+        //                return Content($"Số lượng sản phẩm trong kho không đủ (Tồn: {sanPham.SoluongTon}).");
+        //            }
+        //            // Thêm sản phẩm mới vào giỏ hàng
+        //            GioHangCT ghct = new GioHangCT()
+        //            {
+        //                IdSPCT = id,
+        //                IdAcc = getAcc.IdAcc, // Liên kết với tài khoản user
+        //                Soluong = soLuong,
+        //                GiaBan = (sanPham.Gia ?? 0) * soLuong
+        //            };
+        //            _db.gioHangCT.Add(ghct);
+        //            _db.SaveChanges();
+        //            return RedirectToAction("Index");
+        //        }
+        //        _db.SaveChanges();
+        //        return RedirectToAction("Index");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Content($"Lỗi không xác định: {ex.Message}");
+        //    }
+        //}
+        [HttpPost]
+        public IActionResult AddGioHang(int id, int soLuong = 1)
         {
+            var user = HttpContext.Session.GetString("Account");
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var account = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+            if (account == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+
+            var product = _db.sanPhamCT.FirstOrDefault(x => x.IdSPCT == id);
+            if (product == null)
+            {
+                return Content("Sản phẩm không tồn tại.");
+            }
+
+            // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng chưa
+            var existingCartItem = _db.gioHangCT
+                .FirstOrDefault(gh => gh.IdSPCT == id && gh.IdAcc == account.IdAcc);
+
+            if (existingCartItem != null)
+            {
+                // Nếu đã tồn tại, kiểm tra số lượng sau khi cộng thêm
+                int newQuantity = existingCartItem.Soluong + soLuong;
+                if (newQuantity > product.SoluongTon)
+                {
+                    TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                    return RedirectToAction("Index", "SanPhamCT");
+                }
+
+                // Nếu số lượng hợp lệ, cập nhật số lượng và giá bán
+                existingCartItem.Soluong = newQuantity;
+                existingCartItem.GiaBan = (product.Gia ?? 0) * existingCartItem.Soluong;
+                _db.gioHangCT.Update(existingCartItem);
+            }
+            else
+            {
+                // Nếu chưa tồn tại, kiểm tra số lượng tồn kho trước khi thêm mới
+                if (soLuong > product.SoluongTon)
+                {
+                    TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                    return RedirectToAction("Index", "SanPhamCT");
+                }
+
+                // Nếu số lượng hợp lệ, thêm mới vào giỏ hàng
+                var gioHang = new GioHangCT()
+                {
+                    IdAcc = account.IdAcc,
+                    IdSPCT = product.IdSPCT,
+                    Soluong = soLuong,
+                    GiaBan = (product.Gia ?? 0) * soLuong
+                };
+
+                _db.gioHangCT.Add(gioHang);
+            }
+
             try
             {
-                // Kiểm tra người dùng đăng nhập
-                var acc = HttpContext.Session.GetString("Account");
-                if (acc == null)
-                {
-                    return Content("Chưa đăng nhập hoặc hết hạn");
-                }
-
-                var getAcc = _db.Accounts.FirstOrDefault(x => x.UserName == acc);
-                if (getAcc == null)
-                {
-                    return Content("Tài khoản không tồn tại");
-                }
-
-                // Kiểm tra sản phẩm có tồn tại không
-                var sanPham = _db.sanPhamCT.FirstOrDefault(sp => sp.IdSPCT == id);
-                if (sanPham == null)
-                {
-                    return Content("Sản phẩm không tồn tại");
-                }
-
-                if (soLuong <= 0)
-                {
-                    return Content("Số lượng sản phẩm phải lớn hơn 0.");
-                }
-
-                // Lấy danh sách sản phẩm trong giỏ hàng của user
-                var userCart = _db.gioHangCT.Where(x => x.IdAcc == getAcc.IdAcc).ToList();
-
-                // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
-                var ghctUpdate = userCart.FirstOrDefault(x => x.IdSPCT == id);
-
-                // Nếu sản phẩm đã có trong giỏ hàng, cập nhật số lượng
-                if (ghctUpdate != null)
-                {
-                    if ((ghctUpdate.Soluong + soLuong) > sanPham.SoluongTon)
-                    {
-                        return Content($"Số lượng sản phẩm trong kho không đủ (Tồn: {sanPham.SoluongTon}).");
-                    }
-
-                    ghctUpdate.Soluong += soLuong;
-                    ghctUpdate.GiaBan = (sanPham.Gia ?? 0) * ghctUpdate.Soluong;
-
-                }
-                else
-                {
-                    // Kiểm tra tồn kho trước khi thêm mới
-                    if (soLuong > sanPham.SoluongTon)
-                    {
-                        return Content($"Số lượng sản phẩm trong kho không đủ (Tồn: {sanPham.SoluongTon}).");
-                    }
-
-                    // Thêm sản phẩm mới vào giỏ hàng
-                    GioHangCT ghct = new GioHangCT()
-                    {
-                        IdSPCT = id,
-                        IdAcc = getAcc.IdAcc, // Liên kết với tài khoản user
-                        Soluong = soLuong,
-                        GiaBan = (sanPham.Gia ?? 0) * soLuong
-                    };
-                    _db.gioHangCT.Add(ghct);
-
-                    _db.SaveChanges();
-                    return RedirectToAction("Index");
-                }
-
                 _db.SaveChanges();
-                return RedirectToAction("Index");
+                return RedirectToAction("Index", "GioHangCT");
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex)
             {
-                return Content($"Lỗi không xác định: {ex.Message}");
+                var innerException = ex.InnerException?.Message;
+                return Content($"Có lỗi xảy ra khi lưu: {innerException}");
             }
         }
-
-
-
 
     }
 }

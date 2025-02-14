@@ -11,7 +11,7 @@ options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectio
 
 builder.Services.AddSession(option =>
 {
-    option.IdleTimeout = TimeSpan.FromSeconds(60);
+    option.IdleTimeout = TimeSpan.FromSeconds(390);
 
 });
 

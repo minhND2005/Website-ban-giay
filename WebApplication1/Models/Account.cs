@@ -27,5 +27,7 @@ namespace WebApplication1.Models
         public string Sdt { get; set; }
 
         public GioHangCT? GioHangCT { get; set; }
+
+        public List<HoaDon> hoaDons { get; set; }
     }
 }

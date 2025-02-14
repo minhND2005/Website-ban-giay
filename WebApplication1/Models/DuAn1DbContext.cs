@@ -19,6 +19,10 @@ namespace WebApplication1.Models
                 
             );
 
+            modelBuilder.Entity<GioHangCT>()
+                .HasIndex(gh => new { gh.IdAcc, gh.IdSPCT })
+                 .IsUnique();
+
         }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<ChuongTrinhKM> chuongTrinhKMs { get; set; }
@@ -34,6 +38,8 @@ namespace WebApplication1.Models
         public DbSet<MauSac> mauSacs { get; set; }
         public DbSet<Size> sizes { get; set; }
         public DbSet<GioHangCT> gioHangCT { get; set ; }
+
+       
 
     }
 }

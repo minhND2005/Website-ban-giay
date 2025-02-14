@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApplication1.Models;
 
@@ -11,9 +12,11 @@ using WebApplication1.Models;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(DuAn1DbContext))]
-    partial class DuAn1DbContextModelSnapshot : ModelSnapshot
+    [Migration("20250211073358_minh02")]
+    partial class minh02
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -99,6 +102,30 @@ namespace WebApplication1.Migrations
                     b.ToTable("chuongTrinhKMs");
                 });
 
+            modelBuilder.Entity("WebApplication1.Models.GioHang", b =>
+                {
+                    b.Property<int>("GHID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("GHID"));
+
+                    b.Property<int?>("AccountIdAcc")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IdAcct")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("GHID");
+
+                    b.HasIndex("AccountIdAcc");
+
+                    b.ToTable("GioHang");
+                });
+
             modelBuilder.Entity("WebApplication1.Models.GioHangCT", b =>
                 {
                     b.Property<int>("IdGHCT")
@@ -110,7 +137,13 @@ namespace WebApplication1.Migrations
                     b.Property<decimal>("GiaBan")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("GioHangGHID")
+                        .HasColumnType("int");
+
                     b.Property<int?>("IdAcc")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("IdGH")
                         .HasColumnType("int");
 
                     b.Property<int?>("IdKH")
@@ -139,6 +172,8 @@ namespace WebApplication1.Migrations
 
                     b.HasKey("IdGHCT");
 
+                    b.HasIndex("GioHangGHID");
+
                     b.HasIndex("IdAcc")
                         .IsUnique()
                         .HasFilter("[IdAcc] IS NOT NULL");
@@ -148,10 +183,6 @@ namespace WebApplication1.Migrations
                     b.HasIndex("SanPhamCTIdSPCT");
 
                     b.HasIndex("SanPhamIdSP");
-
-                    b.HasIndex("IdAcc", "IdSPCT")
-                        .IsUnique()
-                        .HasFilter("[IdAcc] IS NOT NULL AND [IdSPCT] IS NOT NULL");
 
                     b.ToTable("gioHangCT");
                 });
@@ -193,18 +224,12 @@ namespace WebApplication1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdHD"));
 
-                    b.Property<int?>("AccountIdAcc")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("GiaBan")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("HoaDonName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("IdAcc")
-                        .HasColumnType("int");
 
                     b.Property<int?>("IdKH")
                         .HasColumnType("int");
@@ -232,8 +257,6 @@ namespace WebApplication1.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("IdHD");
-
-                    b.HasIndex("AccountIdAcc");
 
                     b.HasIndex("KhachHangIdKH");
 
@@ -266,13 +289,6 @@ namespace WebApplication1.Migrations
 
                     b.Property<int?>("SanPhamIdSPCT")
                         .HasColumnType("int");
-
-                    b.Property<int>("Soluong")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TrangThai")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdHDCT");
 
@@ -557,8 +573,21 @@ namespace WebApplication1.Migrations
                     b.ToTable("vouChers");
                 });
 
+            modelBuilder.Entity("WebApplication1.Models.GioHang", b =>
+                {
+                    b.HasOne("WebApplication1.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountIdAcc");
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("WebApplication1.Models.GioHangCT", b =>
                 {
+                    b.HasOne("WebApplication1.Models.GioHang", "GioHang")
+                        .WithMany("gioHangCTs")
+                        .HasForeignKey("GioHangGHID");
+
                     b.HasOne("WebApplication1.Models.Account", "Account")
                         .WithOne("GioHangCT")
                         .HasForeignKey("WebApplication1.Models.GioHangCT", "IdAcc");
@@ -577,6 +606,8 @@ namespace WebApplication1.Migrations
 
                     b.Navigation("Account");
 
+                    b.Navigation("GioHang");
+
                     b.Navigation("KhachHang");
 
                     b.Navigation("SanPham");
@@ -586,10 +617,6 @@ namespace WebApplication1.Migrations
 
             modelBuilder.Entity("WebApplication1.Models.HoaDon", b =>
                 {
-                    b.HasOne("WebApplication1.Models.Account", "Account")
-                        .WithMany("hoaDons")
-                        .HasForeignKey("AccountIdAcc");
-
                     b.HasOne("WebApplication1.Models.KhachHang", "KhachHang")
                         .WithMany("hoaDons")
                         .HasForeignKey("KhachHangIdKH");
@@ -601,8 +628,6 @@ namespace WebApplication1.Migrations
                     b.HasOne("WebApplication1.Models.VouCher", "VouCher")
                         .WithMany("hoaDons")
                         .HasForeignKey("VouCherIdVouCher");
-
-                    b.Navigation("Account");
 
                     b.Navigation("KhachHang");
 
@@ -689,13 +714,16 @@ namespace WebApplication1.Migrations
             modelBuilder.Entity("WebApplication1.Models.Account", b =>
                 {
                     b.Navigation("GioHangCT");
-
-                    b.Navigation("hoaDons");
                 });
 
             modelBuilder.Entity("WebApplication1.Models.ChuongTrinhKM", b =>
                 {
                     b.Navigation("KhuyenMaiCT");
+                });
+
+            modelBuilder.Entity("WebApplication1.Models.GioHang", b =>
+                {
+                    b.Navigation("gioHangCTs");
                 });
 
             modelBuilder.Entity("WebApplication1.Models.HangSanXuat", b =>

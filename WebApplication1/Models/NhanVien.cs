@@ -14,7 +14,7 @@ namespace WebApplication1.Models
         public string TrangThai { get; set; }
         public string Role { get; set; }
         public int? IdAcc { get; set; }
-        public Account Account { get; set; }    
+        public Account? Account { get; set; }    
 
         public List<HoaDon> hoaDons { get; set; }   
     }
