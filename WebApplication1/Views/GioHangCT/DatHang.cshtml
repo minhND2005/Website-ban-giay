@@ -40,11 +40,14 @@
                 <span asp-validation-for="Tuoi" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Đặt Hàng" class="btn btn-primary" />
+                <button type="submit" class="btn btn-primary">Đặt hàng</button>
+                <a class="btn btn-warning" href="@Url.Action("XacNhan", "GioHangCT")">Hủy</a>
             </div>
         </form>
     </div>
 </div>
+
+
 
 @section Scripts {
     @{

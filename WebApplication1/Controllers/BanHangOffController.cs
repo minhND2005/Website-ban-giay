@@ -1,19 +1,156 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Metadata;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
-    public class GioHangCTController : Controller
+    public class BanHangOffController : Controller
     {
-        private readonly DuAn1DbContext _db;
-
-        public GioHangCTController(DuAn1DbContext db)
+        public DuAn1DbContext _db;
+        public BanHangOffController(DuAn1DbContext db)
         {
             _db = db;
         }
-        public IActionResult Index()
+
+
+        public IActionResult Index(string name, string sortOrder, int page = 1)
+        {
+            var sessionData = HttpContext.Session.GetString("Account");
+            if (sessionData == null)
+            {
+                TempData["mess"] = "Chưa đăng nhập, bạn ơi!";
+                return RedirectToAction("Login", "Login");
+            }
+
+            var user = _db.Accounts.FirstOrDefault(x => x.UserName == sessionData);
+            if (user == null)
+            {
+                TempData["mess"] = "Không tìm thấy người dùng.";
+                return RedirectToAction("Login", "Login");
+            }
+
+            ViewData["mess1"] = $"Chào mừng {user.UserName} đã đến xem cửa hàng TrendSneaker";
+
+            var query = from sp in _db.sanPhamCT
+                        join ms in _db.mauSacs on sp.IdMauSac equals ms.IdMauSac into msGroup
+                        from ms in msGroup.DefaultIfEmpty()
+                        join sz in _db.sizes on sp.IdSize equals sz.IdSize into szGroup
+                        from sz in szGroup.DefaultIfEmpty()
+                        join hsx in _db.hangSanXuats on sp.IdHSX equals hsx.IdHSX into hsxGroup
+                        from hsx in hsxGroup.DefaultIfEmpty()
+                        select new SanPhamCT
+                        {
+                            IdSPCT = sp.IdSPCT,
+                            TenSp = sp.TenSp,
+                            Img = sp.Img,
+                            Gia = sp.Gia,
+                            SoluongTon = sp.SoluongTon,
+                            MauSac = ms,
+                            size = sz,
+                            HangSanXuat = hsx
+                        };
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(x => x.TenSp.ToLower().Contains(name.ToLower()));
+            }
+
+            query = sortOrder == "desc"
+                    ? query.OrderByDescending(x => x.TenSp)
+                    : query.OrderBy(x => x.TenSp);
+
+            int pageSize = 6;
+            int totalItems = query.Count();
+            int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var list = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.Name = name;
+
+            if (list.Count == 0 && !string.IsNullOrEmpty(name))
+            {
+                ViewData["NotFound"] = $"Không tìm thấy sản phẩm nào với tên: '{name}'";
+            }
+
+            return View(list);
+        }
+
+        [HttpPost]
+        public IActionResult AddGioHang(int id, int soLuong = 1)
+        {
+            var user = HttpContext.Session.GetString("Account");
+            if (user == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var account = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+            if (account == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+
+            var product = _db.sanPhamCT.FirstOrDefault(x => x.IdSPCT == id);
+            if (product == null)
+            {
+                return Content("Sản phẩm không tồn tại.");
+            }
+
+            // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng chưa
+            var existingCartItem = _db.gioHangCT
+                .FirstOrDefault(gh => gh.IdSPCT == id && gh.IdAcc == account.IdAcc);
+
+            if (existingCartItem != null)
+            {
+                // Nếu đã tồn tại, kiểm tra số lượng sau khi cộng thêm
+                int newQuantity = existingCartItem.Soluong + soLuong;
+                if (newQuantity > product.SoluongTon)
+                {
+                    TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                    return RedirectToAction("Index", "SanPhamCT");
+                }
+
+                // Nếu số lượng hợp lệ, cập nhật số lượng và giá bán
+                existingCartItem.Soluong = newQuantity;
+                existingCartItem.GiaBan = (product.Gia ?? 0) * existingCartItem.Soluong;
+                _db.gioHangCT.Update(existingCartItem);
+            }
+            else
+            {
+                // Nếu chưa tồn tại, kiểm tra số lượng tồn kho trước khi thêm mới
+                if (soLuong > product.SoluongTon)
+                {
+                    TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                    return RedirectToAction("Index", "SanPhamCT");
+                }
+
+                // Nếu số lượng hợp lệ, thêm mới vào giỏ hàng
+                var gioHang = new GioHangCT()
+                {
+                    IdAcc = account.IdAcc,
+                    IdSPCT = product.IdSPCT,
+                    Soluong = soLuong,
+                    GiaBan = (product.Gia ?? 0) * soLuong
+                };
+
+                _db.gioHangCT.Add(gioHang);
+            }
+
+            try
+            {
+                _db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            catch (DbUpdateException ex)
+            {
+                var innerException = ex.InnerException?.Message;
+                return Content($"Có lỗi xảy ra khi lưu: {innerException}");
+            }
+        }
+
+        public IActionResult HoaDonCho()
         {
             var user = HttpContext.Session.GetString("Account");
             if (user == null)
@@ -27,50 +164,26 @@ namespace WebApplication1.Controllers
                 return Content("Tài khoản không tồn tại hoặc bạn đăng nhập sai!");
             }
 
-            bool isCartEmpty = !_db.gioHangCT.Any(x => x.IdAcc == getAcc.IdAcc);
-            if (isCartEmpty)
-            {
-                ViewData["mess1"] = "Giỏ hàng của bạn đang trống.";
-                return View(new List<GioHangCT>());
-            }
-
             var GHCTS = from ghct in _db.gioHangCT
                         join sp in _db.sanPhamCT on ghct.IdSPCT equals sp.IdSPCT into spGroup
                         from sp in spGroup.DefaultIfEmpty()
 
-                        join ms in _db.mauSacs on sp.IdMauSac equals ms.IdMauSac into msGroup
-                        from ms in msGroup.DefaultIfEmpty()
-
-                        join sz in _db.sizes on sp.IdSize equals sz.IdSize into szGroup
-                        from sz in szGroup.DefaultIfEmpty()
-
-                        where ghct.IdAcc == getAcc.IdAcc
-
-
-
-
                         select new GioHangCT()
                         {
-                           IdGHCT = ghct.IdGHCT,
-                           Soluong = ghct.Soluong,
-                           GiaBan = ghct.GiaBan,
-                           IdSPCT = sp.IdSPCT,
-                           //SanPhamCT = sp,
+                            IdGHCT = ghct.IdGHCT,
+                            Soluong = ghct.Soluong,
+                            GiaBan = ghct.GiaBan,
+                            IdSPCT = sp.IdSPCT,
                             SanPhamCT = new SanPhamCT()
                             {
                                 TenSp = sp.TenSp,
-                                Img = sp.Img,
-                                MauSac = ms != null ? new MauSac { TenMau = ms.TenMau } : null,
-                                size = sz != null ? new Size { SizeName = sz.SizeName } : null
+                                Img = sp.Img
                             }
-                           
                         };
 
             var totalPrice = GHCTS.Sum(x => x.GiaBan);
             ViewData["TotalPrice"] = totalPrice;
 
-
-            ViewData["mess1"] = "Mời bạn xem giỏ hàng.";
             return View(GHCTS.ToList());
 
 
@@ -119,7 +232,7 @@ namespace WebApplication1.Controllers
                 var hoaDon = new HoaDon
                 {
                     HoaDonName = "Hóa đơn #" + Guid.NewGuid().ToString().Substring(0, 8),
-                    TrangThai = "Chờ xử lý",
+                    TrangThai = "Chưa thanh toán",
                     IdAcc = Getacc.IdAcc,
                     NgayLap = DateTime.Now
                 };
@@ -143,7 +256,7 @@ namespace WebApplication1.Controllers
                                 IdHD = hoaDon.IdHD,
                                 IdSPCT = sanPham.IdSPCT,
                                 Soluong = item.Soluong,
-                                TrangThai = "Chờ xử lý"
+                                TrangThai = "Chưa thanh toán"
                             };
                             _db.hoaDonsCT.Add(hoaDonCT);
 
@@ -158,7 +271,7 @@ namespace WebApplication1.Controllers
                 }
 
                 hoaDon.GiaBan = totalMoney;
-                
+                hoaDon.TrangThai = "Đã thanh toán";
                 _db.hoaDons.Update(hoaDon);
 
                 _db.SaveChanges();
@@ -167,7 +280,7 @@ namespace WebApplication1.Controllers
                 _db.SaveChanges();
 
                 HttpContext.Session.SetString("PaymentStatus", "Success");
-                return RedirectToAction("Index", "SanPhamCT");
+                return RedirectToAction("XacNhan");
             }
             catch (Exception ex)
             {
@@ -198,17 +311,27 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public IActionResult DatHang(KhachHang model)
         {
-            var list = _db.khachHang.ToList();
-            _db.khachHang.Add(model);
-            _db.SaveChanges();
-            HttpContext.Session.SetString("PaymentStatus", "Success");
-            return RedirectToAction("XacNhan","GioHangCT");
+            try
+            {
+
+
+                var list = _db.khachHang.ToList();
+                _db.khachHang.Add(model);
+                _db.SaveChanges();
+                HttpContext.Session.SetString("PaymentStatus", "Success");
+                return RedirectToAction("XacNhan");
+            }
+            catch (Exception ex)
+            {
+                // Ghi log hoặc hiển thị lỗi chi tiết để dễ debug
+                return Content($"Có lỗi xảy ra: {ex.Message}. {ex.InnerException?.Message}");
+            }
+
         }
 
 
-       
-          public IActionResult XacNhan()
-            {
+        public IActionResult XacNhan()
+        {
             var acc = HttpContext.Session.GetString("Account");
             if (acc == null)
             {
@@ -285,7 +408,5 @@ namespace WebApplication1.Controllers
             TempData["SuccessMessage"] = "Cập nhật giỏ hàng thành công!";
             return RedirectToAction("Index");
         }
-
-
     }
 }

@@ -7,12 +7,13 @@
 <h1>Index</h1>
 
 <p>
-    <a asp-action="Create">Create New</a>
+  
 </p>
 <table class="table">
     <thead>
         <tr>
             <th>@Html.DisplayNameFor(model => model.HoaDonName)</th>
+            <th>@Html.DisplayNameFor(model => model.GiaBan)</th>
             <th>@Html.DisplayNameFor(model => model.GiaBan)</th>
             <th>@Html.DisplayNameFor(model => model.TrangThai)</th>
             <th>@Html.DisplayNameFor(model => model.NgayLap)</th>
@@ -27,9 +28,7 @@
                 <td> @(item.GiaBan.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) + " ₫")</td>
                 <td>@Html.DisplayFor(modelItem => item.TrangThai)</td>
                 <td>@Html.DisplayFor(modelItem => item.NgayLap)</td>
-                <td>
-                    <a asp-action="Delete" asp-route-id="@item.IdHD">Hủy</a>
-                </td>
+              
             </tr>
         }
     </tbody>

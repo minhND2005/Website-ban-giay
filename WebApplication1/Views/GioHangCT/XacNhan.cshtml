@@ -1,6 +1,11 @@
-﻿@{
-    ViewData["Title"] = "Xác nhận thanh toán";
-}
+﻿<h2>Xác nhận Thanh Toán</h2>
+<p>@ViewBag.Message</p>
 
-<h2>@ViewBag.Message</h2>
-<a asp-action="Index" asp-controller="SanPhamCT" class="btn btn-warning">Oke</a>
+@if (ViewBag.Message.Contains("thành công"))
+{
+    <a class="btn btn-warning" href="@Url.Action("ThanhToan", "GioHangCT")">Quay về trang bán hàng</a>
+}
+else
+{
+    <a href="/GioHangCT/Index" class="btn btn-warning">Quay lại giỏ hàng</a>
+}

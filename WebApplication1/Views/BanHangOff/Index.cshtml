@@ -1,4 +1,71 @@
-﻿@model List<WebApplication1.Models.SanPhamCT>
+﻿@* @model List<WebApplication1.Models.SanPhamCT,GioHangCT>
+
+<h1>Giỏ Hàng</h1>
+
+<a asp-action="Index" asp-controller="SanPhamCT" class="btn btn-warning btn-sm">🔙Trang Chủ</a>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info mt-3">
+        Không có sản phẩm nào trong giỏ hàng.
+    </div>
+}
+else
+{
+    <form method="post" asp-action="UpdateQuantity">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tên Sản Phẩm</th>
+                    <th>Hình Ảnh</th>
+                    <th>Màu sắc</th>
+                    <th>Size</th>
+                    <th>Số lượng</th>
+                    <th>Giá bán</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.SanPhamCT.TenSp</td>
+                        <td>
+                            <img src="~/img/@item.SanPhamCT.Img" alt="Ảnh sản phẩm" width="100" height="100" style="object-fit: cover; border-radius: 10px;" />
+                        </td>
+                        <td>@(item.SanPhamCT.MauSac?.TenMau ?? "Không có màu")</td>
+                        <td>@(item.SanPhamCT.size?.SizeName ?? "Không có size")</td>
+                        <td>
+                            <input type="number"
+                                   name="quantities[@item.IdGHCT]"
+                                   value="@item.Soluong"
+                                   min="1"
+                                   class="form-control"
+                                   style="width: 80px;"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                   pattern="\d+"
+                                   title="Vui lòng nhập số hợp lệ" />
+                        </td>
+                        <td>@(item.GiaBan.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) + " ₫")</td>
+                        <td>
+                            <button type="submit" class="btn btn-primary">Cập nhật</button>
+                            <a asp-action="Delete" asp-route-id="@item.IdGHCT" class="btn btn-danger btn-sm">Hủy</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+
+    <h4>
+        Tổng tiền:
+        <span class="text-danger">
+            @((ViewData["TotalPrice"] != null) ? ((decimal)ViewData["TotalPrice"]).ToString("N0", new System.Globalization.CultureInfo("vi-VN")) + " ₫" : "0 ₫")
+        </span>
+    </h4>
+
+    <a class="btn btn-primary" href="@Url.Action("DatHang", "GioHangCT")">Thanh Toán</a>
+}
 
 @{
     ViewData["Title"] = "🛍️ Danh Sách Sản Phẩm";
@@ -6,7 +73,12 @@
 
 <h2>@ViewData["Title"]</h2>
 
-
+@if (TempData["mess"] != null)
+{
+    <div class="alert alert-warning">
+        @TempData["mess"]
+    </div>
+}
 
 @if (ViewData["mess1"] != null)
 {
@@ -37,6 +109,8 @@
 </form>
 <a asp-action="Create" asp-controller="SanPhamCT" class="btn btn-warning btn-sm">Thêm sản phẩm</a>
 
+
+
 <!-- Bảng hiển thị danh sách sản phẩm -->
 <table class="table table-bordered table-hover mt-3">
     <thead>
@@ -64,7 +138,7 @@
                     <td>
                         <img src="~/img/@item.Img" alt="Hình ảnh" style="width: 200px; height: auto;" />
                     </td>
-                    <td>@(item.Gia?.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) + "₫" ?? "Chưa cập nhật")</td>
+                    <td>@(item.Gia?.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) + " ₫" ?? "Chưa cập nhật")</td>
                     <td>@item.SoluongTon</td>
                     <td>@Html.DisplayFor(modelItem => item.MauSac.TenMau)</td>
                     <td>@Html.DisplayFor(modelItem => item.size.SizeName)</td>
@@ -122,3 +196,4 @@
         }
     </ul>
 </nav>
+ *@

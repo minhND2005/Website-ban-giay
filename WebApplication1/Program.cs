@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.Models;
 
@@ -14,6 +15,8 @@ builder.Services.AddSession(option =>
     option.IdleTimeout = TimeSpan.FromSeconds(390);
 
 });
+
+
 
 var app = builder.Build();
 

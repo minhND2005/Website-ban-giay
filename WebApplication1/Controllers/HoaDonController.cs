@@ -30,10 +30,12 @@ namespace WebApplication1.Controllers
                 .Where(hd => hd.IdAcc == account.IdAcc) // Lọc theo IdAcc
                 .ToList();
 
+
             if (!list.Any())  // Nếu không có hóa đơn
             {
                 return Content("Không có hóa đơn nào.");
             }
+
 
             // Trả danh sách hóa đơn cho View
             return View(list);

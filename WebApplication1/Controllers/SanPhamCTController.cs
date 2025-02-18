@@ -1,331 +1,273 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebApplication1.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+    using Microsoft.EntityFrameworkCore;
+    using WebApplication1.Models;
 
-namespace WebApplication1.Controllers
-{
-    public class SanPhamCTController : Controller
+    namespace WebApplication1.Controllers
     {
-        private readonly DuAn1DbContext _db;
-
-        public SanPhamCTController(DuAn1DbContext db)
+        public class SanPhamCTController : Controller
         {
-            _db = db;
-        }
+            private readonly DuAn1DbContext _db;
 
-        public IActionResult Index(string name, string sortOrder)
-        {
-            var sessionData = HttpContext.Session.GetString("Account");
-            if (sessionData == null)
+            public SanPhamCTController(DuAn1DbContext db)
             {
-                TempData["mess"] = "Chưa đăng nhập, bạn ơi!";
-                return RedirectToAction("Login", "Login");
+                _db = db;
             }
-
-            var user = _db.Accounts.FirstOrDefault(x => x.UserName == sessionData);
-            if (user == null)
+        
+        public IActionResult Index(string name, string sortOrder, int page = 1)
             {
-                TempData["mess"] = "Không tìm thấy người dùng.";
-                return RedirectToAction("Login", "Login");
-            }
-
-            ViewData["mess1"] = $"Chào mừng {user.UserName} đã đến xem cửa hàng TrendSneaker";
-
-            var query = from sp in _db.sanPhamCT
-                        join ms in _db.mauSacs on sp.IdMauSac equals ms.IdMauSac into msGroup
-                        from ms in msGroup.DefaultIfEmpty()
-                        join sz in _db.sizes on sp.IdSize equals sz.IdSize into szGroup
-                        from sz in szGroup.DefaultIfEmpty()
-                        join hsx in _db.hangSanXuats on sp.IdHSX equals hsx.IdHSX into hsxGroup
-                        from hsx in hsxGroup.DefaultIfEmpty()
-                        select new SanPhamCT
-                        {
-                            IdSPCT = sp.IdSPCT,
-                            TenSp = sp.TenSp,
-                            Img = sp.Img,
-                            Gia = sp.Gia,
-                            SoluongTon = sp.SoluongTon,
-                            MauSac = ms,
-                            size = sz,
-                            HangSanXuat = hsx
-                        };
-
-            if (!string.IsNullOrEmpty(name))
-            {
-                query = query.Where(x => x.TenSp.ToLower().Contains(name.ToLower()));
-            }
-
-            // Sắp xếp dựa trên sortOrder
-            query = sortOrder == "desc"
-                    ? query.OrderByDescending(x => x.TenSp)
-                    : query.OrderBy(x => x.TenSp);
-
-            var list = query.ToList();
-
-             if (list.Count == 0 && !string.IsNullOrEmpty(name))
-            {
-                ViewData["NotFound"] = $"Không tìm thấy sản phẩm nào với tên: '{name}'";
-            }
-
-            return View(list);
-        }
-
-
-        [HttpGet]
-        public IActionResult Create()
-        {
-            ViewData["MauSacList"] = _db.mauSacs?.ToList() ?? new List<MauSac>();
-            ViewData["SizeList"] = _db.sizes?.ToList() ?? new List<Size>();
-            ViewData["HangSanXuatList"] = _db.hangSanXuats?.ToList() ?? new List<HangSanXuat>();
-
-            return View(new SanPhamCT());
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Create(SanPhamCT sanPham, IFormFile Img)
-        {
-            if (Img != null)
-            {
-                string fileName = Path.GetFileName(Img.FileName);
-                string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                var sessionData = HttpContext.Session.GetString("Account");
+                if (sessionData == null)
                 {
-                    Img.CopyTo(stream);
+                    TempData["mess"] = "Chưa đăng nhập, bạn ơi!";
+                    return RedirectToAction("Login", "Login");
                 }
 
-                sanPham.Img = fileName;
+                var user = _db.Accounts.FirstOrDefault(x => x.UserName == sessionData);
+                if (user == null)
+                {
+                    TempData["mess"] = "Không tìm thấy người dùng.";
+                    return RedirectToAction("Login", "Login");
+                }
+
+                ViewData["mess1"] = $"Chào mừng {user.UserName} đã đến xem cửa hàng TrendSneaker";
+
+                var query = from sp in _db.sanPhamCT
+                            join ms in _db.mauSacs on sp.IdMauSac equals ms.IdMauSac into msGroup
+                            from ms in msGroup.DefaultIfEmpty()
+                            join sz in _db.sizes on sp.IdSize equals sz.IdSize into szGroup
+                            from sz in szGroup.DefaultIfEmpty()
+                            join hsx in _db.hangSanXuats on sp.IdHSX equals hsx.IdHSX into hsxGroup
+                            from hsx in hsxGroup.DefaultIfEmpty()
+                            select new SanPhamCT
+                            {
+                                IdSPCT = sp.IdSPCT,
+                                TenSp = sp.TenSp,
+                                Img = sp.Img,
+                                Gia = sp.Gia,
+                                SoluongTon = sp.SoluongTon,
+                                MauSac = ms,
+                                size = sz,
+                                HangSanXuat = hsx
+                            };
+
+                if (!string.IsNullOrEmpty(name))
+                {
+                    query = query.Where(x => x.TenSp.ToLower().Contains(name.ToLower()));
+                }
+
+                query = sortOrder == "desc"
+                        ? query.OrderByDescending(x => x.TenSp)
+                        : query.OrderBy(x => x.TenSp);
+
+                int pageSize = 6;
+                int totalItems = query.Count();
+                int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+                var list = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+                ViewBag.CurrentPage = page;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.Name = name;
+
+                if (list.Count == 0 && !string.IsNullOrEmpty(name))
+                {
+                    ViewData["NotFound"] = $"Không tìm thấy sản phẩm nào với tên: '{name}'";
+                }
+
+                return View(list);
+            }
+            [HttpGet]
+            public IActionResult Create()
+            {
+                ViewData["MauSacList"] = _db.mauSacs?.ToList() ?? new List<MauSac>();
+                ViewData["SizeList"] = _db.sizes?.ToList() ?? new List<Size>();
+                ViewData["HangSanXuatList"] = _db.hangSanXuats?.ToList() ?? new List<HangSanXuat>();
+
+                return View(new SanPhamCT());
             }
 
-            if (sanPham.IdMauSac.HasValue)
+            [HttpPost]
+            [ValidateAntiForgeryToken]
+            public IActionResult Create(SanPhamCT sanPham, IFormFile Img)
             {
-                sanPham.MauSac = _db.mauSacs.Find(sanPham.IdMauSac);
-            }
+                if (Img != null)
+                {
+                    string fileName = Path.GetFileName(Img.FileName);
+                    string filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", fileName);
 
-            if (sanPham.IdSize.HasValue)
-            {
-                sanPham.size = _db.sizes.Find(sanPham.IdSize);
-            }
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        Img.CopyTo(stream);
+                    }
 
-            if (sanPham.IdHSX.HasValue)
-            {
-                sanPham.HangSanXuat = _db.hangSanXuats.Find(sanPham.IdHSX);
-            }
+                    sanPham.Img = fileName;
+                }
 
-            _db.sanPhamCT.Add(sanPham);
-            _db.SaveChanges();
+                if (sanPham.IdMauSac.HasValue)
+                {
+                    sanPham.MauSac = _db.mauSacs.Find(sanPham.IdMauSac);
+                }
 
-            TempData["mess"] = "Tạo sản phẩm thành công!";
+                if (sanPham.IdSize.HasValue)
+                {
+                    sanPham.size = _db.sizes.Find(sanPham.IdSize);
+                }
 
-            return RedirectToAction("Index");
-        }
+                if (sanPham.IdHSX.HasValue)
+                {
+                    sanPham.HangSanXuat = _db.hangSanXuats.Find(sanPham.IdHSX);
+                }
 
-        public IActionResult Delete(int id)
-        {
-            var list = _db.sanPhamCT.Find(id);
-            _db.sanPhamCT.Remove(list);
-            _db.SaveChanges();
-            return RedirectToAction("Index");
-        }
-        [HttpGet]
-        public IActionResult Edit(int id)
-        {
-            var sp = _db.sanPhamCT.Find(id);
-            if (sp == null)
-            {
-                return NotFound(); // Trả về lỗi nếu sản phẩm không tồn tại
-            }
+                _db.sanPhamCT.Add(sanPham);
+                _db.SaveChanges();
 
-            // Lấy các danh sách liên quan để hiển thị trong View
-            ViewData["MauSacList"] = _db.mauSacs?.ToList() ?? new List<MauSac>();
-            ViewData["SizeList"] = _db.sizes?.ToList() ?? new List<Size>();
-            ViewData["HangSanXuatList"] = _db.hangSanXuats?.ToList() ?? new List<HangSanXuat>();
+                TempData["mess"] = "Tạo sản phẩm thành công!";
 
-            return View(sp);
-        }
-
-        [HttpPost]
-        public IActionResult Edit(SanPhamCT sp, IFormFile Img)
-        {
-            var spEdit = _db.sanPhamCT.Find(sp.IdSPCT);
-            if (spEdit == null)
-            {
-                TempData["mess"] = "Sản phẩm không tồn tại!";
                 return RedirectToAction("Index");
             }
 
-            // Update basic info
-            spEdit.TenSp = sp.TenSp;
-            spEdit.SoluongTon = sp.SoluongTon;
-            spEdit.Gia = sp.Gia;
-
-            // Process Image
-            if (Img != null && Img.Length > 0)
+            public IActionResult Delete(int id)
             {
-                string fileName = Path.GetFileName(Img.FileName);
-                string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", fileName);
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    Img.CopyTo(stream);
-                }
-                spEdit.Img = fileName;
-            }
-
-            // Update relations
-            if (sp.IdMauSac.HasValue)
-                spEdit.IdMauSac = sp.IdMauSac;
-            if (sp.IdSize.HasValue)
-                spEdit.IdSize = sp.IdSize;
-            if (sp.IdHSX.HasValue)
-                spEdit.IdHSX = sp.IdHSX;
-
-            // Save changes to DB
-            _db.sanPhamCT.Update(spEdit);
-            _db.SaveChanges();
-
-            TempData["mess"] = "Cập nhật sản phẩm thành công!";
-            return RedirectToAction("Index");
-        }
-        //[HttpPost]
-        //public IActionResult AddGioHang(int id, int soLuong)
-        //{
-        //    try
-        //    {
-        //        // Kiểm tra người dùng đăng nhập
-        //        var acc = HttpContext.Session.GetString("Account");
-        //        if (acc == null)
-        //        {
-        //            return Content("Chưa đăng nhập hoặc hết hạn");
-        //        }
-        //        var getAcc = _db.Accounts.FirstOrDefault(x => x.UserName == acc);
-        //        if (getAcc == null)
-        //        {
-        //            return Content("Tài khoản không tồn tại");
-        //        }
-        //        // Kiểm tra sản phẩm có tồn tại không
-        //        var sanPham = _db.sanPhamCT.FirstOrDefault(sp => sp.IdSPCT == id);
-        //        if (sanPham == null)
-        //        {
-        //            return Content("Sản phẩm không tồn tại");
-        //        }
-        //        if (soLuong <= 0)
-        //        {
-        //            return Content("Số lượng sản phẩm phải lớn hơn 0.");
-        //        }
-        //        // Lấy danh sách sản phẩm trong giỏ hàng của user
-        //        var userCart = _db.gioHangCT.Where(x => x.IdAcc == getAcc.IdAcc).ToList();
-        //        // Kiểm tra sản phẩm đã có trong giỏ hàng chưa
-        //        var ghctUpdate = userCart.FirstOrDefault(x => x.IdSPCT == id);
-        //        // Nếu sản phẩm đã có trong giỏ hàng, cập nhật số lượng
-        //        if (ghctUpdate != null)
-        //        {
-        //            if ((ghctUpdate.Soluong + soLuong) > sanPham.SoluongTon)
-        //            {
-        //                return Content($"Số lượng sản phẩm trong kho không đủ (Tồn: {sanPham.SoluongTon}).");
-        //            }
-        //            ghctUpdate.Soluong += soLuong;
-        //            ghctUpdate.GiaBan = (sanPham.Gia ?? 0) * ghctUpdate.Soluong;
-        //        }
-        //        else
-        //        {
-        //            // Kiểm tra tồn kho trước khi thêm mới
-        //            if (soLuong > sanPham.SoluongTon)
-        //            {
-        //                return Content($"Số lượng sản phẩm trong kho không đủ (Tồn: {sanPham.SoluongTon}).");
-        //            }
-        //            // Thêm sản phẩm mới vào giỏ hàng
-        //            GioHangCT ghct = new GioHangCT()
-        //            {
-        //                IdSPCT = id,
-        //                IdAcc = getAcc.IdAcc, // Liên kết với tài khoản user
-        //                Soluong = soLuong,
-        //                GiaBan = (sanPham.Gia ?? 0) * soLuong
-        //            };
-        //            _db.gioHangCT.Add(ghct);
-        //            _db.SaveChanges();
-        //            return RedirectToAction("Index");
-        //        }
-        //        _db.SaveChanges();
-        //        return RedirectToAction("Index");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return Content($"Lỗi không xác định: {ex.Message}");
-        //    }
-        //}
-        [HttpPost]
-        public IActionResult AddGioHang(int id, int soLuong = 1)
-        {
-            var user = HttpContext.Session.GetString("Account");
-            if (user == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var account = _db.Accounts.FirstOrDefault(x => x.UserName == user);
-            if (account == null)
-            {
-                return Content("Tài khoản không tồn tại.");
-            }
-
-            var product = _db.sanPhamCT.FirstOrDefault(x => x.IdSPCT == id);
-            if (product == null)
-            {
-                return Content("Sản phẩm không tồn tại.");
-            }
-
-            // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng chưa
-            var existingCartItem = _db.gioHangCT
-                .FirstOrDefault(gh => gh.IdSPCT == id && gh.IdAcc == account.IdAcc);
-
-            if (existingCartItem != null)
-            {
-                // Nếu đã tồn tại, kiểm tra số lượng sau khi cộng thêm
-                int newQuantity = existingCartItem.Soluong + soLuong;
-                if (newQuantity > product.SoluongTon)
-                {
-                    TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
-                    return RedirectToAction("Index", "SanPhamCT");
-                }
-
-                // Nếu số lượng hợp lệ, cập nhật số lượng và giá bán
-                existingCartItem.Soluong = newQuantity;
-                existingCartItem.GiaBan = (product.Gia ?? 0) * existingCartItem.Soluong;
-                _db.gioHangCT.Update(existingCartItem);
-            }
-            else
-            {
-                // Nếu chưa tồn tại, kiểm tra số lượng tồn kho trước khi thêm mới
-                if (soLuong > product.SoluongTon)
-                {
-                    TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
-                    return RedirectToAction("Index", "SanPhamCT");
-                }
-
-                // Nếu số lượng hợp lệ, thêm mới vào giỏ hàng
-                var gioHang = new GioHangCT()
-                {
-                    IdAcc = account.IdAcc,
-                    IdSPCT = product.IdSPCT,
-                    Soluong = soLuong,
-                    GiaBan = (product.Gia ?? 0) * soLuong
-                };
-
-                _db.gioHangCT.Add(gioHang);
-            }
-
-            try
-            {
+                var list = _db.sanPhamCT.Find(id);
+                _db.sanPhamCT.Remove(list);
                 _db.SaveChanges();
-                return RedirectToAction("Index", "GioHangCT");
+                return RedirectToAction("Index");
             }
-            catch (DbUpdateException ex)
+            [HttpGet]
+            public IActionResult Edit(int id)
             {
-                var innerException = ex.InnerException?.Message;
-                return Content($"Có lỗi xảy ra khi lưu: {innerException}");
+                var sp = _db.sanPhamCT.Find(id);
+                if (sp == null)
+                {
+                    return NotFound(); // Trả về lỗi nếu sản phẩm không tồn tại
+                }
+
+                // Lấy các danh sách liên quan để hiển thị trong View
+                ViewData["MauSacList"] = _db.mauSacs?.ToList() ?? new List<MauSac>();
+                ViewData["SizeList"] = _db.sizes?.ToList() ?? new List<Size>();
+                ViewData["HangSanXuatList"] = _db.hangSanXuats?.ToList() ?? new List<HangSanXuat>();
+
+                return View(sp);
             }
-        }
+
+            [HttpPost]
+            public IActionResult Edit(SanPhamCT sp, IFormFile Img)
+            {
+                var spEdit = _db.sanPhamCT.Find(sp.IdSPCT);
+                if (spEdit == null)
+                {
+                    TempData["mess"] = "Sản phẩm không tồn tại!";
+                    return RedirectToAction("Index");
+                }
+
+                // Update basic info
+                spEdit.TenSp = sp.TenSp;
+                spEdit.SoluongTon = sp.SoluongTon;
+                spEdit.Gia = sp.Gia;
+
+                // Process Image
+                if (Img != null && Img.Length > 0)
+                {
+                    string fileName = Path.GetFileName(Img.FileName);
+                    string path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", fileName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        Img.CopyTo(stream);
+                    }
+                    spEdit.Img = fileName;
+                }
+
+                // Update relations
+                if (sp.IdMauSac.HasValue)
+                    spEdit.IdMauSac = sp.IdMauSac;
+                if (sp.IdSize.HasValue)
+                    spEdit.IdSize = sp.IdSize;
+                if (sp.IdHSX.HasValue)
+                    spEdit.IdHSX = sp.IdHSX;
+
+                // Save changes to DB
+                _db.sanPhamCT.Update(spEdit);
+                _db.SaveChanges();
+
+                TempData["mess"] = "Cập nhật sản phẩm thành công!";
+                return RedirectToAction("Index");
+            }
+       
+            [HttpPost]
+            public IActionResult AddGioHang(int id, int soLuong = 1)
+            {
+                var user = HttpContext.Session.GetString("Account");
+                if (user == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                var account = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+                if (account == null)
+                {
+                    return Content("Tài khoản không tồn tại.");
+                }
+
+                var product = _db.sanPhamCT.FirstOrDefault(x => x.IdSPCT == id);
+                if (product == null)
+                {
+                    return Content("Sản phẩm không tồn tại.");
+                }
+
+                // Kiểm tra sản phẩm đã tồn tại trong giỏ hàng chưa
+                var existingCartItem = _db.gioHangCT
+                    .FirstOrDefault(gh => gh.IdSPCT == id && gh.IdAcc == account.IdAcc);
+
+                if (existingCartItem != null)
+                {
+                    // Nếu đã tồn tại, kiểm tra số lượng sau khi cộng thêm
+                    int newQuantity = existingCartItem.Soluong + soLuong;
+                    if (newQuantity > product.SoluongTon)
+                    {
+                        TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                        return RedirectToAction("Index", "SanPhamCT");
+                    }
+
+                    // Nếu số lượng hợp lệ, cập nhật số lượng và giá bán
+                    existingCartItem.Soluong = newQuantity;
+                    existingCartItem.GiaBan = (product.Gia ?? 0) * existingCartItem.Soluong;
+                    _db.gioHangCT.Update(existingCartItem);
+                }
+                else
+                {
+                    // Nếu chưa tồn tại, kiểm tra số lượng tồn kho trước khi thêm mới
+                    if (soLuong > product.SoluongTon)
+                    {
+                        TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                        return RedirectToAction("Index", "SanPhamCT");
+                    }
+
+                    // Nếu số lượng hợp lệ, thêm mới vào giỏ hàng
+                    var gioHang = new GioHangCT()
+                    {
+                        IdAcc = account.IdAcc,
+                        IdSPCT = product.IdSPCT,
+                        Soluong = soLuong,
+                        GiaBan = (product.Gia ?? 0) * soLuong
+                    };
+
+                    _db.gioHangCT.Add(gioHang);
+                }
+
+                try
+                {
+                    _db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
+                catch (DbUpdateException ex)
+                {
+                    var innerException = ex.InnerException?.Message;
+                    return Content($"Có lỗi xảy ra khi lưu: {innerException}");
+                }
+            }
+
+
 
     }
 }

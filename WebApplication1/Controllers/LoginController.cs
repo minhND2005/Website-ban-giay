@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using WebApplication1.Models;
@@ -78,6 +79,7 @@ namespace WebApplication1.Controllers
         {
             return View();
         }
+       
         //đăng nhập
         [HttpPost]
         public IActionResult Login(string userName, string passWord)
@@ -89,7 +91,7 @@ namespace WebApplication1.Controllers
             var acc = _db.Accounts.ToList().FirstOrDefault(x => x.UserName == userName && x.Password == passWord);
             if (acc == null)
             {
-                return Content("Đăng nhập không thành công mời kiểm tra lại tài khoản");
+                TempData["Error"] = "Bạn đăng nhập sai tên đăng nhập hoặc mật khẩu!";
             }
             HttpContext.Session.SetString("Account", userName);
             // Nếu có URL trước đó (ReturnUrl), chuyển hướng đến trang đó
@@ -99,7 +101,7 @@ namespace WebApplication1.Controllers
             }
             return RedirectToAction("Index", "SanPhamCT");
         }
-        [HttpGet]
+
         [HttpGet]
         public IActionResult DoiMatKhau()
         {
@@ -143,41 +145,7 @@ namespace WebApplication1.Controllers
             TempData["Status"] = "Đổi mật khẩu thành công.";
             return RedirectToAction("Login");
         }
-        public IActionResult QuenMatKhau()
-        {
-            return View();
-        }
-        [HttpPost]
-        public IActionResult QuenMatKhau(string UserName)
-        {
-            // Tìm tài khoản theo Email hoặc Số điện thoại
-            var account = _db.Accounts.FirstOrDefault(a => a.UserName == UserName);
-            if (account == null)
-            {
-                TempData["Error"] = "Không tìm thấy tài khoản với thông tin đã cung cấp.";
-                return View();
-            }
-            // Tạo mật khẩu mới ngẫu nhiên
-            string newPassword = GenerateRandomPassword();
-            // Cập nhật mật khẩu mới vào cơ sở dữ liệu
-            account.Password = newPassword;
-            _db.SaveChanges();
-            // Gửi thông báo mật khẩu mới (tùy chọn gửi qua email hoặc hiển thị trực tiếp)
-            TempData["Status"] = $"Mật khẩu mới của bạn là: {newPassword}";
-            return RedirectToAction("Login");
-        }
-        // Hàm tạo mật khẩu ngẫu nhiên
-        private string GenerateRandomPassword()
-        {
-            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            var stringChars = new char[8];
-            var random = new Random();
-            for (int i = 0; i < stringChars.Length; i++)
-            {
-                stringChars[i] = chars[random.Next(chars.Length)];
-            }
-            return new string(stringChars);
-        }
+       
         public IActionResult Logout()
         {
             // Xóa session đăng nhập

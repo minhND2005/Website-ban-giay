@@ -56,8 +56,8 @@
                 <select asp-for="IdHSX" class="form-control" asp-items="@(new SelectList(ViewData["HangSanXuatList"] as List<WebApplication1.Models.HangSanXuat>, "IdHSX", "NameHSX", Model.IdHSX))"></select>
             </div>
 
-            <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
-            <a asp-action="Index" class="btn btn-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary">📝 Cập Nhật</button>
+            <a asp-action="Index" class="btn btn-secondary">🗑️</a>
         </form>
 
     </div>
