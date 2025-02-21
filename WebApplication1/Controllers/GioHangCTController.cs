@@ -68,7 +68,7 @@ namespace WebApplication1.Controllers
 
             var totalPrice = GHCTS.Sum(x => x.GiaBan);
             ViewData["TotalPrice"] = totalPrice;
-
+             
 
             ViewData["mess1"] = "Mời bạn xem giỏ hàng.";
             return View(GHCTS.ToList());
@@ -198,16 +198,71 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public IActionResult DatHang(KhachHang model)
         {
-            var list = _db.khachHang.ToList();
-            _db.khachHang.Add(model);
+            var user = HttpContext.Session.GetString("Account");
+            if (user == null)
+            {
+                return Content("Chưa đăng nhập.");
+            }
+
+            var getAcc = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+            if (getAcc == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+
+            // Kiểm tra nếu đã có thông tin khách hàng thì cập nhật
+            var khachHangExist = _db.khachHang.FirstOrDefault(kh => kh.IdAcc == getAcc.IdAcc);
+
+            if (khachHangExist != null)
+            {
+                // Cập nhật thông tin khách hàng
+                khachHangExist.Name = model.Name;
+                khachHangExist.Email = model.Email;
+                khachHangExist.SDT = model.SDT;
+                khachHangExist.DiaChi = model.DiaChi;
+
+                _db.khachHang.Update(khachHangExist);
+            }
+            else
+            {
+                // Thêm mới thông tin khách hàng nếu chưa có
+                model.IdAcc = getAcc.IdAcc;
+                _db.khachHang.Add(model);
+            }
+
             _db.SaveChanges();
             HttpContext.Session.SetString("PaymentStatus", "Success");
-            return RedirectToAction("XacNhan","GioHangCT");
+            return RedirectToAction("XacNhan", "GioHangCT");
         }
 
 
-       
-          public IActionResult XacNhan()
+        public IActionResult ThongTin()
+        {
+            var user = HttpContext.Session.GetString("Account");
+            if (user == null)
+            {
+                return Content("Chưa đăng nhập.");
+            }
+
+            var getAcc = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+            if (getAcc == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+
+            // Lấy thông tin khách hàng mới nhất từ CSDL
+            var thongTinKH = _db.khachHang
+                                .AsNoTracking() // Đảm bảo không lưu cache
+                                .FirstOrDefault(kh => kh.IdAcc == getAcc.IdAcc);
+
+            return View(thongTinKH);
+        }
+
+
+
+
+
+        public IActionResult XacNhan()
             {
             var acc = HttpContext.Session.GetString("Account");
             if (acc == null)

@@ -19,9 +19,96 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
-                        </li>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <!-- Khi đã đăng nhập, hiển thị Dropdown với tên người dùng -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Xin chào, @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="GioHangCT" asp-action="ThongTin">Thông tin khách hàng</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Login" asp-action="Logout">Đăng xuất</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- Khi chưa đăng nhập, hiển thị Dropdown để chọn đăng nhập hoặc đăng ký -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Admin
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="loginDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="KhachHang" asp-action="Index">Quản lý khách hàng</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Voucher" asp-action="Index">Quản lý voucher</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="HoaDonAdmin" asp-action="Index">Quản lý hóa đơn</a>
+                                    </li>
+                                    --------------------------
+
+                                    <label><strong>Quản lý sản phẩm</strong></label>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="AdminSanPham" asp-action="Index">Sản phẩm</a>
+                                    </li>
+                                   @*  <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="SanPhamCT" asp-action="Edit">+Sửa sản phẩm</a>
+                                    </li> *@
+                                </ul>
+                            </li>
+                        }
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <!-- Khi đã đăng nhập, hiển thị Dropdown với tên người dùng -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Xin chào, @User.Identity.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="GioHangCT" asp-action="ThongTin">Thông tin cá nhân</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Login" asp-action="Logout">Đăng xuất</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- Khi chưa đăng nhập, hiển thị Dropdown để chọn đăng nhập hoặc đăng ký -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="loginDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Login
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="loginDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Login" asp-action="Login">Đăng nhập</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Login" asp-action="DangKy">Tạo tài khoản</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="GioHangCT" asp-action="ThongTin">Thông tin cá nhân</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Login" asp-action="DoiMatKhau">Đổi mật khẩu</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Login" asp-action="Logout">Đăng xuất</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="GioHangCT" asp-action="Index">🛒 Giỏ Hàng</a>
                         </li>

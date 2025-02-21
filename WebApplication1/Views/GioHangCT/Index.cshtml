@@ -54,15 +54,16 @@ else
                         <td>@(item.SanPhamCT.MauSac?.TenMau ?? "Không có màu")</td>
                         <td>@(item.SanPhamCT.size?.SizeName ?? "Không có size")</td>
                         <td>
+@*                             <input type="number" name="soLuong" id="soLuong" class="form-control" required min="1" /> *@
                             <input type="number"
                                    name="quantities[@item.IdGHCT]"
                                    value="@item.Soluong"
-                                   min="1"
+                                   required min="1"
                                    class="form-control"
                                    style="width: 80px;"
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                                   @* oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                                    pattern="\d+"
-                                   title="Vui lòng nhập số hợp lệ" />
+                                   title="Vui lòng nhập số hợp lệ" *@ />
                         </td>
                         <td>@(item.GiaBan.ToString("N0", new System.Globalization.CultureInfo("vi-VN")) + " ₫")</td>
                         <td>

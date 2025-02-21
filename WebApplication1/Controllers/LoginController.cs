@@ -79,28 +79,46 @@ namespace WebApplication1.Controllers
         {
             return View();
         }
-       
+
         //đăng nhập
         [HttpPost]
         public IActionResult Login(string userName, string passWord)
         {
-            if (userName == null || passWord == null)
+            if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(passWord))
             {
                 return View();
             }
-            var acc = _db.Accounts.ToList().FirstOrDefault(x => x.UserName == userName && x.Password == passWord);
+
+            var acc = _db.Accounts.FirstOrDefault(x => x.UserName == userName && x.Password == passWord);
             if (acc == null)
             {
                 TempData["Error"] = "Bạn đăng nhập sai tên đăng nhập hoặc mật khẩu!";
+                return RedirectToAction("Login");
             }
+
+            TempData.Remove("Error");
             HttpContext.Session.SetString("Account", userName);
+
             // Nếu có URL trước đó (ReturnUrl), chuyển hướng đến trang đó
             if (TempData["ReturnUrl"] != null)
             {
                 return Redirect(TempData["ReturnUrl"].ToString());
             }
+
+            // Nếu là Admin -> chuyển hướng đến trang Admin
+            if (userName == "Admin")
+            {
+                return RedirectToAction("Index", "AdminSanPham");
+            }
+            if (userName == "NhanVien")
+            {
+                return RedirectToAction("Index", "NhanVienSanPham");
+            }
+
+            // Nếu là User thường -> chuyển hướng đến trang sản phẩm
             return RedirectToAction("Index", "SanPhamCT");
         }
+
 
         [HttpGet]
         public IActionResult DoiMatKhau()
@@ -145,14 +163,27 @@ namespace WebApplication1.Controllers
             TempData["Status"] = "Đổi mật khẩu thành công.";
             return RedirectToAction("Login");
         }
-       
+
         public IActionResult Logout()
         {
-            // Xóa session đăng nhập
+            // Lấy thông tin từ Session
+            var session = HttpContext.Session.GetString("Account");
+
+            // Kiểm tra nếu Session chưa có (tức là chưa đăng nhập)
+            if (string.IsNullOrEmpty(session))
+            {
+                return RedirectToAction("Login");
+            }
+
+            // Nếu đã đăng nhập, tiến hành xóa Session
             HttpContext.Session.Remove("Account");
+
+            TempData.Clear();
             TempData["Status"] = "Bạn đã đăng xuất thành công!";
+
             // Chuyển hướng về trang đăng nhập
             return RedirectToAction("Login");
         }
+
     }
 }

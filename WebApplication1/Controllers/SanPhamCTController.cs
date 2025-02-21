@@ -225,7 +225,7 @@ using Microsoft.AspNetCore.Mvc;
                     int newQuantity = existingCartItem.Soluong + soLuong;
                     if (newQuantity > product.SoluongTon)
                     {
-                        TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                        TempData["Error1"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
                         return RedirectToAction("Index", "SanPhamCT");
                     }
 
@@ -239,7 +239,7 @@ using Microsoft.AspNetCore.Mvc;
                     // Nếu chưa tồn tại, kiểm tra số lượng tồn kho trước khi thêm mới
                     if (soLuong > product.SoluongTon)
                     {
-                        TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                        TempData["Error2"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
                         return RedirectToAction("Index", "SanPhamCT");
                     }
 
@@ -267,7 +267,189 @@ using Microsoft.AspNetCore.Mvc;
                 }
             }
 
+        [HttpPost]
+        public IActionResult ThanhToanTrucTiep(int id, int soLuong)
+        {
+            try
+            {
+                // Kiểm tra người dùng đã đăng nhập chưa
+                var user = HttpContext.Session.GetString("Account");
+                if (user == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
 
+                // Lấy thông tin tài khoản từ Session
+                var account = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+                if (account == null)
+                {
+                    return Content("Tài khoản không tồn tại.");
+                }
+
+                // Lấy thông tin sản phẩm
+                var product = _db.sanPhamCT.FirstOrDefault(x => x.IdSPCT == id);
+                if (product == null)
+                {
+                    return Content("Sản phẩm không tồn tại.");
+                }
+
+                // Kiểm tra số lượng hợp lệ
+                if (soLuong <= 0)
+                {
+                    TempData["Error"] = "Số lượng không hợp lệ.";
+                    return RedirectToAction("Index");
+                }
+
+                if (soLuong > product.SoluongTon)
+                {
+                    TempData["Error"] = $"Sản phẩm {product.TenSp} chỉ còn lại {product.SoluongTon} trong kho.";
+                    return RedirectToAction("Index");
+                }
+
+                // Tạo hóa đơn
+                var hoaDon = new HoaDon()
+                {
+                    IdAcc = account.IdAcc,
+                    HoaDonName = "Hóa đơn #" + Guid.NewGuid().ToString().Substring(0, 8),
+                    NgayLap = DateTime.Now,
+                    GiaBan = (product.Gia ?? 0) * soLuong,
+                    TrangThai = "Chờ xử lý"
+                };
+                _db.hoaDons.Add(hoaDon);
+                _db.SaveChanges();
+
+                var hoaDonCT = new HoaDonCT()
+                {
+                    IdHD = hoaDon.IdHD,
+                    IdSPCT = product.IdSPCT,
+                    Soluong = soLuong,
+                    GiaBan = product.Gia ?? 0,
+                    TrangThai = "Đã Thanh Toán"
+                };
+                _db.hoaDonsCT.Add(hoaDonCT);
+                _db.SaveChanges();
+
+                // Cập nhật số lượng tồn kho
+                product.SoluongTon -= soLuong;
+                _db.sanPhamCT.Update(product);
+                _db.SaveChanges();
+
+                // Trả về trang xác nhận đơn hàng
+                HttpContext.Session.SetString("PaymentStatus", "Success");
+                return RedirectToAction("DatHangThanhToan", new { id = hoaDon.IdHD });
+            }
+            catch (DbUpdateException ex)
+            {
+                return Content($"Có lỗi xảy ra: {ex.Message}. {ex.InnerException?.Message}");
+            }
+        }
+
+        public IActionResult DatHangThanhToan()
+        {
+            var acc = HttpContext.Session.GetString("Account");
+            if (acc == null)
+            {
+                return Content("Chưa đăng nhập hoặc hết hạn phiên.");
+            }
+
+            // Lấy thông tin tài khoản từ cơ sở dữ liệu
+            var Getacc = _db.Accounts.FirstOrDefault(x => x.UserName == acc);
+            if (Getacc == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+            return View();
+        }
+
+
+        [HttpPost]
+        public IActionResult DatHangThanhToan(KhachHang model)
+        {
+            var user = HttpContext.Session.GetString("Account");
+            if (user == null)
+            {
+                return Content("Chưa đăng nhập.");
+            }
+
+            var getAcc = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+            if (getAcc == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+
+            // Kiểm tra nếu đã có thông tin khách hàng thì cập nhật
+            var khachHangExist = _db.khachHang.FirstOrDefault(kh => kh.IdAcc == getAcc.IdAcc);
+
+            if (khachHangExist != null)
+            {
+                // Cập nhật thông tin khách hàng
+                khachHangExist.Name = model.Name;
+                khachHangExist.Email = model.Email;
+                khachHangExist.SDT = model.SDT;
+                khachHangExist.DiaChi = model.DiaChi;
+
+                _db.khachHang.Update(khachHangExist);
+            }
+            else
+            {
+                // Thêm mới thông tin khách hàng nếu chưa có
+                model.IdAcc = getAcc.IdAcc;
+                _db.khachHang.Add(model);
+            }
+
+            _db.SaveChanges();
+            HttpContext.Session.SetString("PaymentStatus", "Success");
+            return RedirectToAction("XacNhanThanhToan");
+        }
+
+
+        public IActionResult ThongTin()
+        {
+            var user = HttpContext.Session.GetString("Account");
+            if (user == null)
+            {
+                return Content("Chưa đăng nhập.");
+            }
+
+            var getAcc = _db.Accounts.FirstOrDefault(x => x.UserName == user);
+            if (getAcc == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+
+            // Lấy thông tin khách hàng mới nhất từ CSDL
+            var thongTinKH = _db.khachHang
+                                .AsNoTracking() // Đảm bảo không lưu cache
+                                .FirstOrDefault(kh => kh.IdAcc == getAcc.IdAcc);
+
+            return View(thongTinKH);
+        }
+
+        public IActionResult XacNhanThanhToan()
+        {
+            var acc = HttpContext.Session.GetString("Account");
+            if (acc == null)
+            {
+                return Content("Chưa đăng nhập hoặc hết hạn phiên.");
+            }
+
+            var Getacc = _db.Accounts.FirstOrDefault(x => x.UserName == acc);
+            if (Getacc == null)
+            {
+                return Content("Tài khoản không tồn tại.");
+            }
+
+            var paymentStatus = HttpContext.Session.GetString("PaymentStatus");
+            if (paymentStatus == "Success")
+            {
+                ViewBag.Message = "Bạn đã thanh toán thành công!";
+            }
+            else
+            {
+                ViewBag.Message = "Thanh toán thất bại. Vui lòng kiểm tra lại!";
+            }
+            return View();
+        }
 
     }
 }

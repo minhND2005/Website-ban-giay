@@ -1,0 +1,11 @@
+﻿<h2>Xác nhận Thanh Toán</h2>
+<p>@ViewBag.Message</p>
+
+@if (ViewBag.Message.Contains("thành công"))
+{
+    <a class="btn btn-warning" href="@Url.Action("Index", "SanPhamCT")">Quay về trang bán hàng</a>
+}
+else
+{
+    <a href="/SanPhamCT/Index" class="btn btn-warning">Quay về trang bán hàng</a>
+}

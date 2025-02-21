@@ -24,7 +24,7 @@ namespace WebApplication1.Controllers
             var account = _db.Accounts.FirstOrDefault(x => x.UserName == user);
             if (account == null || account.UserName != "Admin")
             {
-                return Content("Bạn không có quyền xem thông tin của khách.");
+                return Content("Bạn không có quyền xem thông tin.");
             }
             // Dùng Include để nạp dữ liệu Account liên quan
             var list = from hd in _db.hoaDons
@@ -64,11 +64,25 @@ namespace WebApplication1.Controllers
         }
 
         [HttpPost]
-        public IActionResult Edit(HoaDon hoaDon)
+        public IActionResult Edit(HoaDon model)
         {
-            _db.hoaDons.Update(hoaDon);
-            _db.SaveChanges();
-            return RedirectToAction("Index");
+            var hoaDon = _db.hoaDons.FirstOrDefault(h => h.IdHD == model.IdHD);
+            if (hoaDon != null)
+            {
+                hoaDon.HoaDonName = hoaDon.HoaDonName;
+                hoaDon.TrangThai = model.TrangThai;
+
+                // Khóa cứng các giá trị không muốn thay đổi
+                hoaDon.NgayLap = hoaDon.NgayLap;
+                hoaDon.IdAcc = hoaDon.IdAcc;
+                hoaDon.GiaBan = hoaDon.GiaBan;
+
+                _db.hoaDons.Update(hoaDon);
+                _db.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            return View(model);
         }
+
     }
 }

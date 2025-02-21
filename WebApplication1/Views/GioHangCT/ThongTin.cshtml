@@ -1,0 +1,38 @@
+﻿@model WebApplication1.Models.KhachHang
+
+<div class="container mt-5">
+    <div class="card shadow-lg" style="max-width: 600px; margin: auto;">
+        <div class="card-header text-center bg-primary text-white">
+            <h2>Thông Tin Khách Hàng</h2>
+        </div>
+        <div class="card-body">
+            @if (Model != null)
+            {
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Tên khách hàng:</strong> @Model.Name
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Địa chỉ:</strong> @Model.DiaChi
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Số điện thoại:</strong> @Model.SDT
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Tuổi:</strong> @Model.Tuoi
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Email:</strong> @Model.Email
+                    </li>
+                </ul>
+            }
+            else
+            {
+                <p>Không có thông tin khách hàng.</p>
+            }
+        </div>
+        <div class="card-footer text-center">
+            <a href="@Url.Action("Index", "SanPhamCT")" class="btn btn-secondary">Quay lại trang chủ</a>
+        </div>
+    </div>
+</div>

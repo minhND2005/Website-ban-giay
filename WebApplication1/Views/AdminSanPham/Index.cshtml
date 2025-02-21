@@ -35,13 +35,13 @@
 }
 
 <!-- Form tìm kiếm sản phẩm -->
-<form method="get" asp-action="Index" asp-controller="SanPhamCT">
+<form method="get" asp-action="Index" asp-controller="AdminSanPham">
     <div class="form-group">
         <input type="text" name="name" class="form-control" placeholder="Nhập tên sản phẩm để tìm kiếm..." value="@ViewBag.Name" />
     </div>
     <button type="submit" class="btn btn-primary">Tìm kiếm</button>
 </form>
-
+<a asp-action="Create" asp-controller="AdminSanPham" class="btn btn-warning btn-sm">Thêm sản phẩm</a>
 
 <!-- Bảng hiển thị danh sách sản phẩm -->
 <table class="table table-bordered table-hover mt-3">
@@ -76,31 +76,8 @@
                     <td>@Html.DisplayFor(modelItem => item.size.SizeName)</td>
                     <td>@Html.DisplayFor(modelItem => item.HangSanXuat.NameHSX)</td>
                     <td>
-                       
-                        @using (Html.BeginForm("AddGioHang", "SanPhamCT", FormMethod.Post))
-                        {
-                            @Html.Hidden("id", item.IdSPCT) <!-- Thay yourIdValue bằng giá trị id thực tế -->
-                            <div class="form-group">
-                                <label for="soLuong" class="control-label">Số lượng:</label>
-                                <input type="number" name="soLuong" id="soLuong" class="form-control" required min="1" />
-                            </div>
-                            <div class="form-group">
-
-                                <input type="submit" value="Thêm vào giỏ hàng" class="btn btn-primary" />
-                            </div>
-                        }
-                        @using (Html.BeginForm("ThanhToanTrucTiep", "SanPhamCT", FormMethod.Post))
-                        {
-                            @Html.Hidden("id", item.IdSPCT)
-                            <div class="form-group">
-                                <label for="soLuong" class="control-label">Số lượng:</label>
-                                <input type="number" name="soLuong" id="soLuong" class="form-control" required min="1" />
-                            </div>
-                            <div class="form-group">
-                                <input type="submit" value="Thanh Toán" class="btn btn-primary" />
-                            </div>
-                        }
-
+                        <a asp-action="Edit" asp-route-id="@item.IdSPCT" class="btn btn-warning btn-sm">📝Cập nhật</a>
+                        <a asp-action="Delete" asp-route-id="@item.IdSPCT" class="btn btn-danger btn-sm">🗑Hủy</a>
                     </td>
                 </tr>
                 index++;
